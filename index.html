@@ -3,7 +3,16 @@
 <meta charset="UTF-8">  
 <meta name="viewport" content="width=device-width, initial-scale=1.0">  
 <title>Manhwa List</title>  <link rel="manifest" href="manifest.json">  
-<meta name="theme-color" content="#0f172a">  <style>  
+<meta name="theme-color" content="#0f172a">  
+  
+  <style> 
+.update-text {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #a5b4fc;
+  opacity: 0.8;
+}
+    
 body {  
   font-family: Arial;  
   background: radial-gradient(circle at top, #0f172a, #020617);  
@@ -199,45 +208,67 @@ button {
 </div>
 
   </div>  
-</div>  <script>  
+</div>  
+  
+<script>  
 let data = JSON.parse(localStorage.getItem("manhwa")) || [];  
-let editMode = false;  
+let editMode = false;
+let openedIndex = null;
+
+function getToday(){
+  return new Date().toLocaleDateString("id-ID");
+}  
   
 function save(){  
   localStorage.setItem("manhwa", JSON.stringify(data));  
 }  
   
-function render(){  
-  let list = document.getElementById("list");  
-  let search = document.getElementById("search").value.toLowerCase();  
-  list.innerHTML = "";  
-  
-  data.forEach((item,i)=>{  
-    if(!item.title.toLowerCase().includes(search)) return;  
-  
-    let div = document.createElement("div");  
-    div.className = "item " + (editMode ? "edit": "") + (item.end ? " end":"");  
-  
-    div.innerHTML = `  
-      <span>  
-        ${i+1}. ${item.title} ${  
-          item.end ? "(END)" : `(Ch.  
-          <span contenteditable="${editMode}" oninput="editCh(${i}, this)">  
-            ${item.ch}  
-          </span>)`  
-        }  
-      </span>  
-  
-      <span class="controls">  
-        <button onclick="plus(${i})">+1</button>  
-        <button onclick="minus(${i})">-1</button>  
-        <button onclick="toggleEnd(${i})">END</button>  
-        <button class="delete" onclick="removeItem(${i})">X</button>  
-      </span>  
-    `;  
-    list.appendChild(div);  
-  });  
-}  
+function render(){
+  let list = document.getElementById("list");
+  let search = document.getElementById("search").value.toLowerCase();
+  list.innerHTML = "";
+
+  data.forEach((item,i)=>{
+    if(!item.title.toLowerCase().includes(search)) return;
+
+    let div = document.createElement("div");
+    div.className = "item " + (editMode ? "edit": "") + (item.end ? " end":"");
+
+    // klik expand
+    div.onclick = () => {
+      openedIndex = openedIndex === i ? null : i;
+      render();
+    };
+
+    div.innerHTML = `
+      <div>
+        ${i+1}. ${item.title} ${
+          item.end ? "(END)" : `(Ch.
+          <span contenteditable="${editMode}" 
+                oninput="editCh(${i}, this); event.stopPropagation();">
+            ${item.ch}
+          </span>)`
+        }
+
+        ${
+          openedIndex === i
+          ? `<div class="update-text">
+               Last Update: ${item.lastUpdate || "-"}
+             </div>`
+          : ""
+        }
+      </div>
+
+      <span class="controls">
+        <button onclick="event.stopPropagation(); plus(${i})">+1</button>
+        <button onclick="event.stopPropagation(); minus(${i})">-1</button>
+        <button onclick="event.stopPropagation(); toggleEnd(${i})">END</button>
+        <button class="delete" onclick="event.stopPropagation(); removeItem(${i})">X</button>
+      </span>
+    `;
+    list.appendChild(div);
+  });
+}
   
 function toggleMenu(){  
   let m = document.getElementById("menu");  
@@ -257,7 +288,12 @@ function add(){
   let ch = chInput.value || 1;  
   if(!title) return;  
   
-  data.push({title, ch: parseInt(ch), end:false});  
+  data.push({
+  title,
+  ch: parseInt(ch),
+  end:false,
+  lastUpdate: getToday()
+});  
   save();  
   render();  
   closeModal();  
@@ -266,19 +302,34 @@ function add(){
   chInput.value="";  
 }  
   
-function plus(i){ data[i].ch++; save(); render(); }  
-function minus(i){ if(data[i].ch>0) data[i].ch--; save(); render(); }  
-  
-function editCh(i,el){  
-  let val = parseInt(el.innerText);  
-  if(!isNaN(val)){ data[i].ch = val; save(); }  
+function plus(i){
+  data[i].ch++;
+  data[i].lastUpdate = getToday();
+  save(); render();
+}
+
+function minus(i){
+  if(data[i].ch>0){
+    data[i].ch--;
+    data[i].lastUpdate = getToday();
+  }
+  save(); render();
 }  
   
-function toggleEnd(i){  
-  data[i].end = !data[i].end;  
-  save();  
-  render();  
-}  
+function editCh(i,el){
+  let val = parseInt(el.innerText);
+  if(!isNaN(val)){
+    data[i].ch = val;
+    data[i].lastUpdate = getToday();
+    save();
+  }
+  
+  function toggleEnd(i){
+  data[i].end = !data[i].end;
+  data[i].lastUpdate = getToday();
+  save();
+  render();
+}
   
 function removeItem(i){  
   if(confirm("Hapus manhwa ini?")){  
