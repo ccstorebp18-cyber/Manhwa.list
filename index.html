@@ -162,7 +162,8 @@ button {
 <div class="modal" id="importModal">
   <div class="modal-box">
     <h3>Import Data</h3>
-    <textarea id="importText" placeholder="Paste data di sini..."></textarea>
+    <textarea id="importText" placeholder="Paste data (optional)..."></textarea>
+    <input type="file" id="fileInput" accept=".json">
 
     <div class="modal-actions">
       <button onclick="closeImport()">CANCEL</button>
@@ -222,18 +223,12 @@ function toggleEdit(){
 }
 
 /* TAMBAH */
-function openModal(){
-  document.getElementById("modal").style.display="flex";
-}
-
-function closeModal(){
-  document.getElementById("modal").style.display="none";
-}
+function openModal(){ document.getElementById("modal").style.display="flex"; }
+function closeModal(){ document.getElementById("modal").style.display="none"; }
 
 function add(){
   let title = document.getElementById("titleInput").value;
   let ch = document.getElementById("chInput").value || 1;
-
   if(!title) return;
 
   data.push({title, ch: parseInt(ch), end:false});
@@ -241,8 +236,8 @@ function add(){
   render();
   closeModal();
 
-  document.getElementById("titleInput").value="";
-  document.getElementById("chInput").value="";
+  titleInput.value="";
+  chInput.value="";
 }
 
 /* EDIT */
@@ -268,37 +263,62 @@ function removeItem(i){
   }
 }
 
-/* EXPORT */
+/* EXPORT FILE */
 function exportData(){
-  let text = JSON.stringify(data);
-  prompt("Copy data ini:", text);
+  let dataStr = JSON.stringify(data, null, 2);
+  let blob = new Blob([dataStr], {type: "application/json"});
+  let url = URL.createObjectURL(blob);
+
+  let a = document.createElement("a");
+  a.href = url;
+  a.download = "manhwa-backup.json";
+  a.click();
+
+  URL.revokeObjectURL(url);
 }
 
 /* IMPORT */
-function openImport(){
-  document.getElementById("importModal").style.display="flex";
-}
-
-function closeImport(){
-  document.getElementById("importModal").style.display="none";
-}
+function openImport(){ document.getElementById("importModal").style.display="flex"; }
+function closeImport(){ document.getElementById("importModal").style.display="none"; }
 
 function importData(){
-  try{
-    let text = document.getElementById("importText").value;
-    let parsed = JSON.parse(text);
+  let file = document.getElementById("fileInput").files[0];
 
-    if(Array.isArray(parsed)){
-      data = parsed;
-      save();
-      render();
-      closeImport();
-      alert("Import berhasil!");
-    } else {
-      alert("Format salah!");
+  if(file){
+    let reader = new FileReader();
+
+    reader.onload = function(e){
+      try{
+        let parsed = JSON.parse(e.target.result);
+        if(Array.isArray(parsed)){
+          data = parsed;
+          save();
+          render();
+          closeImport();
+          alert("Import berhasil!");
+        } else alert("Format salah!");
+      } catch {
+        alert("File tidak valid!");
+      }
+    };
+
+    reader.readAsText(file);
+
+  } else {
+    let text = document.getElementById("importText").value;
+
+    try{
+      let parsed = JSON.parse(text);
+      if(Array.isArray(parsed)){
+        data = parsed;
+        save();
+        render();
+        closeImport();
+        alert("Import berhasil!");
+      } else alert("Format salah!");
+    } catch {
+      alert("Data tidak valid!");
     }
-  } catch {
-    alert("Data tidak valid!");
   }
 }
 
