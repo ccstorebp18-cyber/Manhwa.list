@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manhwa List</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: #f1f3f4;
+  margin: 0;
+}
+
+.header {
+  text-align: center;
+  padding: 15px;
+  font-size: 22px;
+  font-weight: bold;
+}
+
+#search {
+  width: 90%;
+  margin: 10px auto;
+  display: block;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+}
+
+.item {
+  background: white;
+  margin: 10px;
+  padding: 15px;
+  border-radius: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.end {
+  background: #ffd6d6 !important;
+}
+
+.controls {
+  display: none;
+}
+
+.edit .controls {
+  display: inline;
+}
+
+button {
+  border: none;
+  background: none;
+  font-size: 16px;
+}
+
+.delete {
+  color: red;
+  font-weight: bold;
+}
+
+.fab {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #1a73e8;
+  color: white;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  font-size: 24px;
+}
+
+.menu {
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  display: none;
+}
+
+.menu button {
+  background: white;
+  padding: 10px;
+  border-radius: 10px;
+  margin-top: 5px;
+}
+
+/* MODAL */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-box {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  width: 80%;
+}
+
+.modal input, .modal textarea {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: none;
+  border-bottom: 1px solid #ccc;
+}
+
+.modal-actions {
+  text-align: right;
+}
+
+.modal-actions button {
+  margin-left: 10px;
+  color: #1a73e8;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">📚 Manhwa List</div>
+
+<input id="search" placeholder="Search..." oninput="render()">
+
+<div id="list"></div>
+
+<!-- MENU -->
+<div class="menu" id="menu">
+  <button onclick="openModal()">➕ Tambah</button>
+  <button onclick="toggleEdit()">✏️ Edit</button>
+  <button onclick="exportData()">📤 Export</button>
+  <button onclick="openImport()">📥 Import</button>
+</div>
+
+<button class="fab" onclick="toggleMenu()">☰</button>
+
+<!-- MODAL TAMBAH -->
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <h3>Tambah Manhwa</h3>
+    <input id="titleInput" placeholder="Judul">
+    <input id="chInput" placeholder="Chapter" type="number">
+
+    <div class="modal-actions">
+      <button onclick="closeModal()">CANCEL</button>
+      <button onclick="add()">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMPORT -->
+<div class="modal" id="importModal">
+  <div class="modal-box">
+    <h3>Import Data</h3>
+    <textarea id="importText" placeholder="Paste data di sini..."></textarea>
+
+    <div class="modal-actions">
+      <button onclick="closeImport()">CANCEL</button>
+      <button onclick="importData()">IMPORT</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let data = JSON.parse(localStorage.getItem("manhwa")) || [];
+let editMode = false;
+
+function save(){
+  localStorage.setItem("manhwa", JSON.stringify(data));
+}
+
+function render(){
+  let list = document.getElementById("list");
+  let search = document.getElementById("search").value.toLowerCase();
+  list.innerHTML = "";
+
+  data.forEach((item,i)=>{
+    if(!item.title.toLowerCase().includes(search)) return;
+
+    let div = document.createElement("div");
+    div.className = "item " + (editMode ? "edit": "") + (item.end ? " end":"");
+
+    div.innerHTML = `
+      <span>
+        ${i+1}. ${item.title} ${
+          item.end ? "(END)" : `(Ch.
+          <span contenteditable="${editMode}" oninput="editCh(${i}, this)">
+            ${item.ch}
+          </span>)`
+        }
+      </span>
+
+      <span class="controls">
+        <button onclick="plus(${i})">+1</button>
+        <button onclick="minus(${i})">-1</button>
+        <button onclick="toggleEnd(${i})">END</button>
+        <button class="delete" onclick="removeItem(${i})">X</button>
+      </span>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function toggleMenu(){
+  let m = document.getElementById("menu");
+  m.style.display = m.style.display==="block"?"none":"block";
+}
+
+function toggleEdit(){
+  editMode = !editMode;
+  render();
+}
+
+/* TAMBAH */
+function openModal(){
+  document.getElementById("modal").style.display="flex";
+}
+
+function closeModal(){
+  document.getElementById("modal").style.display="none";
+}
+
+function add(){
+  let title = document.getElementById("titleInput").value;
+  let ch = document.getElementById("chInput").value || 1;
+
+  if(!title) return;
+
+  data.push({title, ch: parseInt(ch), end:false});
+  save();
+  render();
+  closeModal();
+
+  document.getElementById("titleInput").value="";
+  document.getElementById("chInput").value="";
+}
+
+/* EDIT */
+function plus(i){ data[i].ch++; save(); render(); }
+function minus(i){ if(data[i].ch>0) data[i].ch--; save(); render(); }
+
+function editCh(i,el){
+  let val = parseInt(el.innerText);
+  if(!isNaN(val)){ data[i].ch = val; save(); }
+}
+
+function toggleEnd(i){
+  data[i].end = !data[i].end;
+  save();
+  render();
+}
+
+function removeItem(i){
+  if(confirm("Hapus manhwa ini?")){
+    data.splice(i,1);
+    save();
+    render();
+  }
+}
+
+/* EXPORT */
+function exportData(){
+  let text = JSON.stringify(data);
+  prompt("Copy data ini:", text);
+}
+
+/* IMPORT */
+function openImport(){
+  document.getElementById("importModal").style.display="flex";
+}
+
+function closeImport(){
+  document.getElementById("importModal").style.display="none";
+}
+
+function importData(){
+  try{
+    let text = document.getElementById("importText").value;
+    let parsed = JSON.parse(text);
+
+    if(Array.isArray(parsed)){
+      data = parsed;
+      save();
+      render();
+      closeImport();
+      alert("Import berhasil!");
+    } else {
+      alert("Format salah!");
+    }
+  } catch {
+    alert("Data tidak valid!");
+  }
+}
+
+render();
+</script>
+
+</body>
+</html>
