@@ -608,37 +608,172 @@ function importData(){
         if(Array.isArray(parsed)){
           data = parsed;
           save();
+<script>
+let data = JSON.parse(localStorage.getItem("manhwa")) || [];
+let editMode = false;
+let openedIndex = null;
+
+function getToday(){
+  return new Date().toLocaleDateString("id-ID");
+}
+
+function save(){
+  localStorage.setItem("manhwa", JSON.stringify(data));
+}
+
+function render(){
+  let list = document.getElementById("list");
+  let search = document.getElementById("search").value.toLowerCase();
+  list.innerHTML = "";
+
+  data.forEach((item,i)=>{
+    if(!item.title.toLowerCase().includes(search)) return;
+
+    let div = document.createElement("div");
+    div.className = "item " + (editMode ? "edit": "") + (item.end ? " end":"");
+
+    div.onclick = () => {
+      openedIndex = openedIndex === i ? null : i;
+      render();
+    };
+
+    div.innerHTML = `
+      <div>
+        ${i+1}. ${item.title} ${
+          item.end ? "(END)" : `(Ch.
+          <span contenteditable="${editMode}" 
+                oninput="editCh(${i}, this); event.stopPropagation();">
+            ${item.ch}
+          </span>)`
+        }
+
+        ${
+          openedIndex === i
+          ? `<div class="update-text">
+               Last Update: ${item.lastUpdate || "-"}
+             </div>`
+          : ""
+        }
+      </div>
+
+      <span class="controls">
+        <button onclick="event.stopPropagation(); plus(${i})">+1</button>
+        <button onclick="event.stopPropagation(); minus(${i})">-1</button>
+        <button onclick="event.stopPropagation(); toggleEnd(${i})">END</button>
+        <button class="delete" onclick="event.stopPropagation(); removeItem(${i})">X</button>
+      </span>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function toggleMenu(){
+  let m = document.getElementById("menu");
+  m.style.display = m.style.display==="block"?"none":"block";
+}
+
+function toggleEdit(){
+  editMode = !editMode;
+  render();
+}
+
+function openModal(){ document.getElementById("modal").style.display="flex"; }
+function closeModal(){ document.getElementById("modal").style.display="none"; }
+
+function add(){
+  let title = titleInput.value;
+  let ch = chInput.value || 1;
+  if(!title) return;
+
+  data.push({
+    title,
+    ch: parseInt(ch),
+    end:false,
+    lastUpdate: getToday()
+  });
+
+  save();
+  render();
+  closeModal();
+
+  titleInput.value="";
+  chInput.value="";
+}
+
+function plus(i){
+  data[i].ch++;
+  data[i].lastUpdate = getToday();
+  save(); render();
+}
+
+function minus(i){
+  if(data[i].ch>0){
+    data[i].ch--;
+    data[i].lastUpdate = getToday();
+  }
+  save(); render();
+}
+
+function editCh(i,el){
+  let val = parseInt(el.innerText);
+  if(!isNaN(val)){
+    data[i].ch = val;
+    data[i].lastUpdate = getToday();
+    save();
+  }
+}
+
+function toggleEnd(i){
+  data[i].end = !data[i].end;
+  data[i].lastUpdate = getToday();
+  save();
+  render();
+}
+
+function removeItem(i){
+  if(confirm("Hapus manhwa ini?")){
+    data.splice(i,1);
+    save();
+    render();
+  }
+}
+
+/* EXPORT */
+function exportData(){
+  let dataStr = JSON.stringify(data, null, 2);
+  let blob = new Blob([dataStr], {type: "application/json"});
+  let url = URL.createObjectURL(blob);
+
+  let a = document.createElement("a");
+  a.href = url;
+  a.download = "manhwa-backup.json";
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+
+/* IMPORT */
+function openImport(){ document.getElementById("importModal").style.display="flex"; }
+function closeImport(){ document.getElementById("importModal").style.display="none"; }
+
+function importData(){
+  let file = document.getElementById("fileInput").files[0];
+
+  if(file){
+    let reader = new FileReader();
+
+    reader.onload = function(e){
+      try{
+        let parsed = JSON.parse(e.target.result);
+        if(Array.isArray(parsed)){
+          data = parsed;
+          save();
           render();
           closeImport();
           alert("Import berhasil!");
         } else alert("Format salah!");
       } catch {
-        alert("File tidak valid!");
-      }
-    };
-
-    reader.readAsText(file);
-
-  } else {
-    let text = document.getElementById("importText").value;
-
-    try{
-      let parsed = JSON.parse(text);
-      if(Array.isArray(parsed)){
-        data = parsed;
-        save();
-        render();
-        closeImport();
-        alert("Import berhasil!");
-      } else alert("Format salah!");
-    } catch {
-      alert("Data tidak valid!");
-    }
-  }
-}
-
-render();
-</script>
+        alert
 
 <script>
 if ('serviceWorker' in navigator) {
