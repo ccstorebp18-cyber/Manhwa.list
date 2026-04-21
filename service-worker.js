@@ -1,4 +1,4 @@
-const CACHE_NAME = "manhwa-app-v2";
+const CACHE_NAME = "manhwa-app-v7";
 
 const urlsToCache = [
   "./",
