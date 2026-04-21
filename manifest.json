@@ -1,6 +1,6 @@
 {
   "name": "Manhwa List",
-  "short_name": "Manhwa",
+  "short_name": "Manhwa List",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
