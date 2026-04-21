@@ -323,8 +323,9 @@ function editCh(i,el){
     data[i].lastUpdate = getToday();
     save();
   }
-  
-  function toggleEnd(i){
+} // 👈 ini yang kurang tadi
+
+function toggleEnd(i){
   data[i].end = !data[i].end;
   data[i].lastUpdate = getToday();
   save();
