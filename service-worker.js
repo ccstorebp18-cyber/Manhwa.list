@@ -1,4 +1,5 @@
-const CACHE_NAME = "manhwa-app-v1";
+const CACHE_NAME = "manhwa-app-v2"; // ganti versi biar refresh cache
+
 const urlsToCache = [
   "/",
   "/index.html",
