@@ -22,11 +22,19 @@ body {
   padding: 20px 10px 10px;
 }
 
-.logo-full {
-  width: 180px;
-  max-width: 80%;
-  filter: drop-shadow(0 0 10px #00eaff)
-          drop-shadow(0 0 20px #ff00ff);
+.logo {
+  width: 85%;
+  max-width: 350px;
+  border-radius: 20px;
+
+  /* glow neon */
+  box-shadow:
+    0 0 20px rgba(0,255,255,0.4),
+    0 0 40px rgba(255,0,255,0.4),
+    0 0 60px rgba(0,255,255,0.2);
+
+  display: block;
+  margin: 0 auto;
 }
 
 /* SEARCH */
@@ -176,7 +184,7 @@ button {
 
 <!-- HEADER -->
 <div class="header">
-  <img src="logo.png" class="logo-full">
+  <img src="logo.png" class="logo">
 </div>
 
 <input id="search" placeholder="Search..." oninput="render()">
